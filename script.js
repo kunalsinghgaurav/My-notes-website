@@ -314,3 +314,21 @@ restoreInput.addEventListener('change', (e) => {
   };
   reader.readAsText(file);
 });
+
+// --- 3-LINE MENU TOGGLE ---
+const hamburgerBtn = document.getElementById('hamburgerMenuBtn');
+const featuresDrawer = document.getElementById('featuresDrawer');
+
+if (hamburgerBtn && featuresDrawer) {
+  hamburgerBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    featuresDrawer.classList.toggle('active');
+  });
+
+  // Bahar click karne par menu apne aap band ho jaye
+  document.addEventListener('click', (e) => {
+    if (!featuresDrawer.contains(e.target) && e.target !== hamburgerBtn) {
+      featuresDrawer.classList.remove('active');
+    }
+  });
+}
