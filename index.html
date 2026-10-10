@@ -3,488 +3,81 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Ultimate Pro Notepad Studio</title>
+  <title>Ultimate Pro Notepad</title>
   <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#4f46e5">
   <link rel="stylesheet" href="style.css">
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
-  <div class="notepad-app">
-    <!-- PANEL 1: FOLDERS, LOGIN, STREAKS & TOOLS -->
-    <aside class="folders-panel" id="foldersPanel">
-      <div class="panel-header">
-        <h3>📁 Folders</h3>
-        <div class="folder-header-btns">
-          <button id="authModalBtn" class="login-badge-btn">👤 Login</button>
-          <button id="newFolderBtn" title="Create Folder">+ Folder</button>
-        </div>
-      </div>
-      <ul class="folder-list" id="folderList"></ul>
-
-      <div class="goal-section">
-        <div class="goal-header-row">
-          <h4>🎯 Daily Goal</h4>
-          <button id="setGoalBtn" class="hub-btn">Set</button>
-        </div>
-        <div class="goal-progress-bar">
-          <div id="goalProgressFill" class="goal-fill" style="width: 0%;"></div>
-        </div>
-        <span id="goalText" class="sub-text">0 / 500 words (0%)</span>
+  <div class="app-layout">
+    <aside class="sidebar">
+      <div class="sidebar-header">
+        <h2>📝 My Notepad</h2>
+        <button id="newNoteBtn" class="primary-btn">+ New Note</button>
       </div>
 
-      <div class="exam-section">
-        <div class="exam-header-row">
-          <h4>🎯 Exam Target</h4>
-          <button id="setExamBtn" class="hub-btn">Set</button>
-        </div>
-        <div class="exam-badge" id="examCountdownDisplay">Set target date</div>
-      </div>
-
-      <div class="streak-section">
-        <h4>🔥 Study Streak</h4>
-        <div class="streak-badge">
-          <span id="streakCount">0</span> Days Active
-        </div>
-      </div>
-
-      <div class="ambient-section">
-        <h4>🎧 Focus Sounds</h4>
-        <div class="ambient-controls">
-          <button class="ambient-btn" data-sound="rain">🌧️ Rain</button>
-          <button class="ambient-btn" data-sound="cafe">☕ Cafe</button>
-          <button class="ambient-btn" data-sound="white">🌊 Noise</button>
-        </div>
-      </div>
-
-      <div class="tags-section">
-        <h4>🏷️ Tags</h4>
-        <div class="tags-cloud" id="tagsCloud"></div>
-      </div>
-
-      <div class="backup-section">
-        <h4>💾 Data Hub</h4>
-        <div class="backup-actions">
-          <button id="backupDownloadBtn" class="hub-btn">📥 Backup</button>
-          <button id="backupRestoreBtn" class="hub-btn">📤 Restore</button>
-          <input type="file" id="backupFileInput" accept=".json" style="display:none;">
-        </div>
-      </div>
-      
-      <div class="trash-section">
-        <li class="folder-item trash-item" id="trashFolderItem">
-          <span>🗑️ Trash (<span id="trashCount">0</span>)</span>
-        </li>
-      </div>
-    </aside>
-
-    <!-- PANEL 2: FILES LIST -->
-    <section class="files-panel" id="filesPanel">
-      <div class="panel-header">
-        <div>
-          <h4 id="currentFolderHeading">Study</h4>
-          <span id="fileCount" class="sub-text">0 files</span>
-        </div>
-        <div class="panel-header-actions">
-          <button id="themeToggleBtn" class="icon-btn" title="Toggle Dark/Light Mode">🌙</button>
-          <button id="spotlightBtn" class="icon-btn" title="Global Spotlight Search (Ctrl+K)">🔍 Global</button>
-          <button id="starFilterBtn" class="icon-btn" title="Filter Starred Notes">⭐ Stars</button>
-          <button id="scratchpadToggleBtn" class="icon-btn" title="Quick Sticky Scratchpad">📌 Pad</button>
-          <button id="openTxtBtn" class="icon-btn" title="Open .txt or .md File">📂 Open</button>
-          <input type="file" id="fileInputPicker" accept=".txt,.md" style="display:none;">
-          <button id="newFileBtn" class="primary-btn" title="Create File">+ New</button>
-        </div>
-      </div>
       <div class="search-box">
         <input type="text" id="searchInput" placeholder="Search notes...">
       </div>
-      <ul class="file-list" id="fileList"></ul>
-    </section>
 
-    <!-- PANEL 3: MAIN WORKSPACE (WITH HORIZONTAL TABS AT THE VERY TOP) -->
-    <main class="editor-panel" id="editorPanel">
-      <!-- 1. Horizontal Tabs Bar Across the Top -->
-      <div class="note-tabs-bar" id="noteTabsBar"></div>
-
-      <!-- 2. Dual Split Container (Only shows when opened) -->
-      <div id="dualPaneLeft" class="dual-pane-left hidden">
-        <div class="dual-pane-header">
-          <span>📑 Reference: <b id="dualLeftTitle">None</b></span>
-          <button id="closeDualBtn" class="del-folder">✕ Close Split</button>
-        </div>
-        <div id="dualLeftBody" class="notepad-body reference-body"></div>
+      <div class="notes-list" id="notesList">
+        <!-- Notes list yahan dynamically render hogi -->
       </div>
 
-      <!-- 3. Empty State -->
-      <div id="editorEmptyState" class="empty-editor">
-        <span>📝 Select a note or click "+ New" to start writing</span>
-      </div>
+      <div class="sidebar-footer">
+        <div class="auth-status-bar" style="margin-bottom: 10px; font-size: 13px;">
+          <span id="syncStatus">☁️ Offline</span>
+        </div>
+        <button id="openAuthModalBtn" class="secondary-btn" style="width: 100%; margin-bottom: 8px;">👤 Account / Login</button>
+        <button id="logoutBtn" class="danger-btn" style="width: 100%; display: none; margin-bottom: 8px;">Log Out</button>
 
-      <!-- 4. PIN Protected Lock Overlay -->
-      <div id="lockScreenOverlay" class="lock-overlay hidden">
-        <div class="lock-box">
-          <span class="lock-icon">🔒</span>
-          <h3>Protected Content</h3>
-          <p id="lockScreenMessage">Enter PIN to Unlock:</p>
-          <input type="password" id="pinInputUnlock" maxlength="8" placeholder="Enter PIN">
-          <button id="unlockBtn" class="primary-btn">Unlock</button>
+        <div class="backup-tools" style="display: flex; gap: 6px;">
+          <button id="backupBtn" class="small-btn" style="flex: 1;">Backup</button>
+          <label class="small-btn" style="flex: 1; text-align: center; cursor: pointer;">
+            Restore
+            <input type="file" id="restoreInput" accept=".json" style="display: none;">
+          </label>
         </div>
       </div>
+    </aside>
 
-      <!-- 5. PDF Split Viewer -->
-      <div id="pdfViewerContainer" class="pdf-panel hidden">
-        <div class="pdf-header">
-          <span>📖 PDF Reader</span>
-          <button id="closePdfBtn" class="del-folder">✕ Close</button>
+    <main class="editor-area">
+      <div class="editor-toolbar">
+        <input type="text" id="noteTitle" placeholder="Untitled Note" class="note-title-input">
+        <div class="toolbar-actions">
+          <button id="deleteNoteBtn" class="icon-btn" title="Delete Note">🗑️</button>
         </div>
-        <iframe id="pdfFrame" class="pdf-frame"></iframe>
       </div>
-
-      <!-- 6. Main Editor Area -->
-      <div id="editorContent" class="editor-content hidden">
-        <div class="editor-top-bar">
-          <div class="meta-info">
-            <span class="folder-badge" id="editorFolderBadge">Study</span>
-            <span class="date-text" id="editorDateText">Just now</span>
-            
-            <div class="pomodoro-box">
-              <span id="pomoLabel">⏳ Timer:</span>
-              <span id="pomoDisplay">00:25:00</span>
-              <button id="pomoToggleBtn" class="pomo-btn">Start</button>
-              <button id="pomoResetBtn" class="pomo-btn">Reset</button>
-              <button id="pomoSetTimeBtn" class="pomo-btn">⚙️ Set</button>
-            </div>
-          </div>
-
-          <div class="editor-actions">
-            <span id="statsCounter" class="stats-badge">0 words | 0 chars | ⏱️ 0m read</span>
-            <button id="wordCloudBtn" class="action-btn" title="Word Cloud">☁️ Word Cloud</button>
-            <button id="lockFolderBtn" class="action-btn" title="Lock Folder">🔐 Folder Lock</button>
-            <button id="starNoteBtn" class="action-btn" title="Star Note">☆ Star</button>
-            <button id="tocBtn" class="action-btn" title="Outline Index">📑 Outline</button>
-            <button id="extractPdfBtn" class="action-btn" title="Extract text from PDF">📄 PDF Extractor</button>
-            <input type="file" id="extractPdfInput" accept="application/pdf" style="display:none;">
-            <button id="splitNotesBtn" class="action-btn" title="Dual Notes Split">🪟 Dual Split</button>
-            <button id="webcamScanBtn" class="action-btn" title="Webcam Scanner">📷 Cam Scan</button>
-            <button id="mindmapBtn" class="action-btn" title="Mind Map">🧠 Mind Map</button>
-            <button id="analyticsBtn" class="action-btn" title="Study Heatmap">📊 Heatmap</button>
-            <button id="aiAssistBtn" class="action-btn ai-btn" title="AI Assistant">🤖 AI Tools</button>
-            <button id="kanbanBtn" class="action-btn" title="Kanban Board">📋 Kanban</button>
-            <button id="templateBtn" class="action-btn" title="Templates">📑 Templates</button>
-            <button id="graphBtn" class="action-btn" title="Knowledge Graph">🕸️ Graph</button>
-            <button id="historyBtn" class="action-btn" title="Version History">⏳ History</button>
-            <button id="zenModeBtn" class="action-btn" title="Reading Mode">📖 Zen</button>
-            <button id="voiceTypingBtn" class="action-btn mic-btn" title="Voice Typing">🎙️ Voice</button>
-            <button id="recordAudioBtn" class="action-btn" title="Audio Memo">⏺️ Audio</button>
-            <button id="drawBtn" class="action-btn" title="Drawing Canvas">🎨 Draw</button>
-            <button id="splitPdfBtn" class="action-btn" title="Split PDF Reader">📑 PDF</button>
-            <input type="file" id="pdfFileInput" accept="application/pdf" style="display:none;">
-            <button id="flashcardBtn" class="action-btn" title="Flashcards">🗂️ Flashcard</button>
-            <button id="ttsBtn" class="action-btn" title="Text to Speech">🔊 Listen</button>
-            <button id="lockToggleBtn" class="action-btn" title="Lock Note">🔒 Note Lock</button>
-            <button id="pinBtn" class="action-btn" title="Pin Note">📌 Pin</button>
-            <button id="saveToDiskBtn" class="action-btn disk-btn" title="Save to PC">💾 Save PC</button>
-            <button id="exportMdBtn" class="action-btn" title="Download Markdown">📝 .md</button>
-            <button id="exportTxtBtn" class="action-btn" title="Download Text">📄 .txt</button>
-            <button id="exportPdfBtn" class="action-btn" title="Print to PDF">🖨️ PDF</button>
-            <button id="deleteActiveFileBtn" class="danger-btn" title="Move to Trash">🗑️ Trash</button>
-            <button id="restoreFileBtn" class="restore-btn hidden" title="Restore File">♻️ Restore</button>
-          </div>
-        </div>
-
-        <div class="tags-input-container">
-          <span class="tag-icon">🏷️</span>
-          <input type="text" id="noteTagsInput" placeholder="Tags (#physics) ya wiki links [[Note Name]] add karein...">
-        </div>
-
-        <div class="formatting-toolbar" id="formattingToolbar">
-          <select id="fontSelect" class="tool-select">
-            <option value="system-ui, sans-serif">Default Sans</option>
-            <option value="'Segoe UI', Tahoma, Geneva, Verdana, sans-serif">Segoe UI</option>
-            <option value="'Georgia', serif">Georgia Serif</option>
-            <option value="'Courier New', Courier, monospace">Courier Code</option>
-            <option value="'Comic Sans MS', cursive, sans-serif">Handwriting</option>
-            <option value="'Times New Roman', Times, serif">Times New Roman</option>
-          </select>
-
-          <select id="fontSizeSelect" class="tool-select">
-            <option value="3">Normal</option>
-            <option value="2">Small</option>
-            <option value="4">Medium</option>
-            <option value="5">Large</option>
-            <option value="6">Huge</option>
-          </select>
-
-          <span class="divider"></span>
-
-          <button type="button" class="tool-btn" data-cmd="bold" title="Bold"><b>B</b></button>
-          <button type="button" class="tool-btn" data-cmd="italic" title="Italic"><i>I</i></button>
-          <button type="button" class="tool-btn" data-cmd="underline" title="Underline"><u>U</u></button>
-          <button type="button" class="tool-btn" data-cmd="strikeThrough" title="Strikethrough"><s>S</s></button>
-          
-          <button type="button" class="tool-btn hl-btn" data-cmd="hiliteColor" data-val="#fef08a" title="Yellow">🟡</button>
-          <button type="button" class="tool-btn hl-btn" data-cmd="hiliteColor" data-val="#bbf7d0" title="Green">🟢</button>
-          <button type="button" class="tool-btn hl-btn" data-cmd="hiliteColor" data-val="#bfdbfe" title="Blue">🔵</button>
-          <button type="button" class="tool-btn hl-btn" data-cmd="hiliteColor" data-val="#fbcfe8" title="Pink">🌸</button>
-          
-          <span class="divider"></span>
-          
-          <button type="button" class="tool-btn" data-cmd="formatBlock" data-val="h2" title="Heading"><b>H</b></button>
-          <button type="button" class="tool-btn" id="bulletListBtn" title="Bullet List">• List</button>
-          <button type="button" class="tool-btn" id="numberListBtn" title="Numbered List">1. List</button>
-          <button type="button" class="tool-btn" id="addChecklistBtn" title="Insert Task">☑️ Task</button>
-          <button type="button" class="tool-btn" id="linkNoteBtn" title="Link another note">🔗 Link</button>
-          <button type="button" class="tool-btn" id="insertTableBtn" title="Insert Smart Table">📊 Table</button>
-          <button type="button" class="tool-btn" id="insertMathBtn" title="Insert Math Formula">📐 Math</button>
-          <button type="button" class="tool-btn" id="insertCodeBtn" title="Insert Code Block">💻 Code</button>
-          <button type="button" class="tool-btn" id="insertImageBtn" title="Attach Photo">🖼️ Photo</button>
-          <input type="file" id="imageFileInput" accept="image/*" style="display:none;">
-          <span class="calc-indicator" title="Type 25*40= then space to calculate!">⚡ Auto-Calc</span>
-        </div>
-
-        <input type="text" id="noteTitleInput" class="notepad-title" placeholder="File Title (e.g. Study Plan - 10 Oct)...">
-        <div id="noteBodyInput" class="notepad-body" contenteditable="true" data-placeholder="Start typing, paste images, write calculations (e.g. 15*6= then space)..."></div>
-      </div>
+      <div id="noteBody" class="note-body-editor" contenteditable="true" placeholder="Start typing your note here..."></div>
     </main>
-
-    <!-- Supabase Auth Modal -->
-    <div id="authModal" class="modal-backdrop hidden">
-      <div class="lock-box" style="width:340px;">
-        <span class="lock-icon">☁️</span>
-        <h3 id="authModalTitle">Cloud Account</h3>
-        <p class="sub-text" id="authStatusText">Notes cloud par sync karne ke liye login karein</p>
-        <input type="email" id="authEmail" class="spotlight-search-box" style="margin-top:10px;" placeholder="Email address">
-        <input type="password" id="authPassword" class="spotlight-search-box" placeholder="Password (min 6 characters)">
-        <div style="display:flex; gap:8px; justify-content:center; margin-top:8px;">
-          <button id="authLoginBtn" class="primary-btn">Log In</button>
-          <button id="authSignUpBtn" class="hub-btn" style="color:var(--text-main); border-color:#cbd5e1;">Sign Up</button>
-        </div>
-        <button id="authCloseBtn" class="hub-btn" style="margin-top:10px; width:100%;">✕ Cancel</button>
-      </div>
-    </div>
-
-    <!-- Word Cloud Modal -->
-    <div id="wordCloudModal" class="modal-backdrop hidden">
-      <div class="wordcloud-dialog">
-        <div class="modal-header">
-          <h4>☁️ Topic Frequency Word Cloud</h4>
-          <button id="closeWordCloudBtn" class="hub-btn">✕</button>
-        </div>
-        <div id="wordCloudContainer" class="wordcloud-container"></div>
-      </div>
-    </div>
-
-    <!-- Table of Contents Drawer -->
-    <div id="tocDrawer" class="scratchpad-drawer hidden">
-      <div class="scratchpad-header">
-        <span>📑 Table of Contents</span>
-        <button id="closeTocBtn" class="del-folder">✕</button>
-      </div>
-      <ul id="tocList" class="toc-list"></ul>
-    </div>
-
-    <!-- Scratchpad Drawer -->
-    <div id="scratchpadDrawer" class="scratchpad-drawer hidden">
-      <div class="scratchpad-header">
-        <span>📌 Quick Sticky Scratchpad</span>
-        <button id="closeScratchpadBtn" class="del-folder">✕</button>
-      </div>
-      <textarea id="scratchpadContent" placeholder="Temporary calculations ya rough notes..."></textarea>
-    </div>
   </div>
 
-  <!-- Spotlight Search Modal -->
-  <div id="spotlightModal" class="modal-backdrop hidden">
-    <div class="spotlight-dialog">
+  <!-- AUTH POPUP MODAL -->
+  <div id="authModal" class="modal-overlay" style="display: none;">
+    <div class="modal-card">
       <div class="modal-header">
-        <h4>🔍 Global Spotlight Search</h4>
-        <button id="closeSpotlightBtn" class="hub-btn">✕ Esc</button>
+        <h3>Cloud Account</h3>
+        <button id="closeAuthModalBtn" class="close-x">&times;</button>
       </div>
-      <input type="text" id="spotlightInput" class="spotlight-search-box" placeholder="Search across all notes...">
-      <ul id="spotlightResults" class="spotlight-results-list"></ul>
-    </div>
-  </div>
+      <p style="font-size: 13px; color: #64748b; margin-bottom: 15px;">Notes cloud par sync karne ke liye login ya sign up karein</p>
+      
+      <div class="form-group" style="margin-bottom: 12px;">
+        <input type="email" id="authEmail" placeholder="Email address" class="modal-input" style="width: 100%; padding: 10px; border-radius: 6px; border: 1px solid #cbd5e1;">
+      </div>
+      <div class="form-group" style="margin-bottom: 16px;">
+        <input type="password" id="authPassword" placeholder="Password" class="modal-input" style="width: 100%; padding: 10px; border-radius: 6px; border: 1px solid #cbd5e1;">
+      </div>
 
-  <!-- Webcam Scanner Modal -->
-  <div id="webcamModal" class="modal-backdrop hidden">
-    <div class="webcam-dialog">
-      <div class="modal-header">
-        <h4>📷 Webcam Note Scanner</h4>
-        <button id="closeWebcamBtn" class="hub-btn">✕</button>
+      <div style="display: flex; gap: 10px;">
+        <button id="authLoginBtn" class="primary-btn" style="flex: 1; padding: 10px;">Log In</button>
+        <button id="authSignUpBtn" class="secondary-btn" style="flex: 1; padding: 10px;">Sign Up</button>
       </div>
-      <video id="webcamVideo" autoplay playsinline></video>
-      <div class="draw-tools" style="justify-content:center; margin-top:12px;">
-        <button id="capturePhotoBtn" class="primary-btn">📸 Capture & Insert</button>
-      </div>
-    </div>
-  </div>
 
-  <!-- Mind Map Modal -->
-  <div id="mindmapModal" class="modal-backdrop hidden">
-    <div class="mindmap-dialog">
-      <div class="modal-header">
-        <h4>🧠 Interactive Mind Map Maker</h4>
-        <div class="draw-tools">
-          <button id="addMindmapNodeBtn" class="primary-btn">+ Add Node</button>
-          <button id="insertMindmapBtn" class="primary-btn">Insert to Note</button>
-          <button id="closeMindmapBtn" class="hub-btn">✕</button>
-        </div>
+      <!-- FORGOT PASSWORD LINK -->
+      <div style="text-align: center; margin-top: 14px;">
+        <a href="#" id="forgotPasswordBtn" style="color: #6366f1; font-size: 13px; text-decoration: underline; cursor: pointer;">Forgot Password?</a>
       </div>
-      <canvas id="mindmapCanvas" width="800" height="450"></canvas>
-    </div>
-  </div>
-
-  <!-- Analytics Modal -->
-  <div id="analyticsModal" class="modal-backdrop hidden">
-    <div class="analytics-dialog">
-      <div class="modal-header">
-        <h4>📊 Study Heatmap & Analytics</h4>
-        <button id="closeAnalyticsBtn" class="hub-btn">✕</button>
-      </div>
-      <div class="analytics-stats-grid">
-        <div class="analytics-card">
-          <span class="card-val" id="totalNotesVal">0</span>
-          <span class="card-lbl">Total Notes</span>
-        </div>
-        <div class="analytics-card">
-          <span class="card-val" id="totalWordsVal">0</span>
-          <span class="card-lbl">Total Words Written</span>
-        </div>
-        <div class="analytics-card">
-          <span class="card-val" id="activeStreakVal">0 Days</span>
-          <span class="card-lbl">Current Streak</span>
-        </div>
-      </div>
-      <h5 style="margin: 14px 0 8px;">Activity Matrix (Last 28 Days)</h5>
-      <div class="heatmap-grid" id="heatmapGrid"></div>
-    </div>
-  </div>
-
-  <!-- AI Assistant Modal -->
-  <div id="aiModal" class="modal-backdrop hidden">
-    <div class="ai-dialog">
-      <div class="modal-header">
-        <h4>🤖 In-App AI Study Assistant</h4>
-        <button id="closeAiBtn" class="hub-btn">✕</button>
-      </div>
-      <div class="ai-actions">
-        <button id="aiSummarizeBtn" class="primary-btn">📝 Summarize</button>
-        <button id="aiQuizBtn" class="primary-btn">❓ Generate Quiz</button>
-        <button id="aiGrammarBtn" class="primary-btn">✨ Clean Text</button>
-      </div>
-      <div id="aiResultBox" class="ai-result-box">AI output will appear here...</div>
-    </div>
-  </div>
-
-  <!-- Templates Modal -->
-  <div id="templateModal" class="modal-backdrop hidden">
-    <div class="template-dialog">
-      <div class="modal-header">
-        <h4>📑 Note Templates</h4>
-        <button id="closeTemplateBtn" class="hub-btn">✕</button>
-      </div>
-      <div class="template-grid">
-        <div class="template-card" onclick="applyTemplate('cornell')">
-          <h5>📚 Cornell Notes</h5>
-          <p>Cue Column, Notes, and Summary layout.</p>
-        </div>
-        <div class="template-card" onclick="applyTemplate('habits')">
-          <h5>🎯 Daily Habits</h5>
-          <p>Track targets, sleep, and revision.</p>
-        </div>
-        <div class="template-card" onclick="applyTemplate('syllabus')">
-          <h5>📅 Syllabus Planner</h5>
-          <p>Weekly breakdown of chapters.</p>
-        </div>
-        <div class="template-card" onclick="applyTemplate('lab')">
-          <h5>🔬 Science Experiment</h5>
-          <p>Aim, Theory, Apparatus, Results.</p>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- Kanban Modal -->
-  <div id="kanbanModal" class="modal-backdrop hidden">
-    <div class="kanban-dialog">
-      <div class="modal-header">
-        <h4>📋 Kanban Study Board</h4>
-        <div class="draw-tools">
-          <button id="addKanbanTaskBtn" class="primary-btn">+ Add Task</button>
-          <button id="closeKanbanBtn" class="hub-btn">✕</button>
-        </div>
-      </div>
-      <div class="kanban-board">
-        <div class="kanban-col" id="colTodo" ondragover="allowDrop(event)" ondrop="drop(event, 'todo')">
-          <div class="kanban-col-header">📌 To-Do</div>
-          <div class="kanban-items" id="itemsTodo"></div>
-        </div>
-        <div class="kanban-col" id="colDoing" ondragover="allowDrop(event)" ondrop="drop(event, 'doing')">
-          <div class="kanban-col-header">⚡ In Progress</div>
-          <div class="kanban-items" id="itemsDoing"></div>
-        </div>
-        <div class="kanban-col" id="colDone" ondragover="allowDrop(event)" ondrop="drop(event, 'done')">
-          <div class="kanban-col-header">✅ Completed</div>
-          <div class="kanban-items" id="itemsDone"></div>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- Drawing Modal -->
-  <div id="drawingModal" class="modal-backdrop hidden">
-    <div class="drawing-dialog">
-      <div class="modal-header">
-        <h4>🎨 Digital Drawing Board</h4>
-        <div class="draw-tools">
-          <input type="color" id="drawColor" value="#000000">
-          <input type="range" id="drawSize" min="1" max="20" value="3">
-          <button id="drawClearBtn" class="hub-btn">Clear</button>
-          <button id="drawInsertBtn" class="primary-btn">Insert</button>
-          <button id="drawCloseBtn" class="hub-btn">✕</button>
-        </div>
-      </div>
-      <canvas id="drawingCanvas" width="750" height="450"></canvas>
-    </div>
-  </div>
-
-  <!-- Flashcards Modal -->
-  <div id="flashcardModal" class="modal-backdrop hidden">
-    <div class="flashcard-dialog">
-      <div class="modal-header">
-        <h4>🗂️ Flashcard Active Recall</h4>
-        <button id="closeFlashcardBtn" class="hub-btn">✕</button>
-      </div>
-      <div id="flashcardContainer" class="flashcard-card">
-        <p id="flashcardText">Click to flip!</p>
-      </div>
-      <div class="flashcard-nav">
-        <button id="fcPrevBtn" class="hub-btn">⬅️ Previous</button>
-        <span id="fcCounter">1 / 1</span>
-        <button id="fcNextBtn" class="hub-btn">Next ➡️</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- History Modal -->
-  <div id="historyModal" class="modal-backdrop hidden">
-    <div class="history-dialog">
-      <div class="modal-header">
-        <h4>⏳ Version History</h4>
-        <button id="closeHistoryBtn" class="hub-btn">✕</button>
-      </div>
-      <ul id="historyList" class="history-list"></ul>
-    </div>
-  </div>
-
-  <!-- Graph Modal -->
-  <div id="graphModal" class="modal-backdrop hidden">
-    <div class="graph-dialog">
-      <div class="modal-header">
-        <h4>🕸️ Knowledge Connection Graph</h4>
-        <button id="closeGraphBtn" class="hub-btn">✕</button>
-      </div>
-      <canvas id="graphCanvas" width="850" height="480"></canvas>
     </div>
   </div>
 
