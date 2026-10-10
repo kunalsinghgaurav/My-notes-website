@@ -1,0 +1,15 @@
+{
+  "name": "Ultimate Pro Notepad Studio",
+  "short_name": "ProNotepad",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#0f172a",
+  "theme_color": "#3b82f6",
+  "icons": [
+    {
+      "src": "https://cdn-icons-png.flaticon.com/512/3242/3242257.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
