@@ -13,51 +13,106 @@ let notes = JSON.parse(localStorage.getItem('my_notepad_notes') || '[]');
 let activeNoteId = null;
 let currentUser = null;
 
-// DOM Elements
-const notesList = document.getElementById('notesList');
-const noteTitle = document.getElementById('noteTitle');
-const noteBody = document.getElementById('noteBody');
-const newNoteBtn = document.getElementById('newNoteBtn');
-const deleteNoteBtn = document.getElementById('deleteNoteBtn');
-const searchInput = document.getElementById('searchInput');
-const syncStatus = document.getElementById('syncStatus');
-const authModal = document.getElementById('authModal');
-const openAuthModalBtn = document.getElementById('openAuthModalBtn');
-const closeAuthModalBtn = document.getElementById('closeAuthModalBtn');
-const authLoginBtn = document.getElementById('authLoginBtn');
-const authSignUpBtn = document.getElementById('authSignUpBtn');
-const logoutBtn = document.getElementById('logoutBtn');
-const forgotPasswordBtn = document.getElementById('forgotPasswordBtn');
-const backupBtn = document.getElementById('backupBtn');
-const restoreInput = document.getElementById('restoreInput');
+// Safe DOM Helper
+const get = (id) => document.getElementById(id);
 
 // --- INITIALIZATION ---
 window.addEventListener('DOMContentLoaded', async () => {
+  setupEventListeners();
   renderNotesList();
+
   if (notes.length > 0) {
     selectNote(notes[0].id);
   } else {
     createNewNote();
   }
 
-  // Check auth state
+  // Check auth session
   if (sbClient) {
-    const { data: { session } } = await sbClient.auth.getSession();
-    if (session?.user) {
-      handleUserLoggedIn(session.user);
+    try {
+      const { data: { session } } = await sbClient.auth.getSession();
+      if (session?.user) {
+        handleUserLoggedIn(session.user);
+      }
+    } catch (e) {
+      console.warn("Auth check failed:", e);
     }
   }
 });
 
-// --- NOTE FUNCTIONS ---
+// --- EVENT LISTENERS SETUP ---
+function setupEventListeners() {
+  // 1. Hamburger Features Menu Toggle
+  const hamburgerBtn = get('hamburgerMenuBtn');
+  const featuresDrawer = get('featuresDrawer');
+  if (hamburgerBtn && featuresDrawer) {
+    hamburgerBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      featuresDrawer.classList.toggle('active');
+    });
+
+    document.addEventListener('click', (e) => {
+      if (!featuresDrawer.contains(e.target) && e.target !== hamburgerBtn) {
+        featuresDrawer.classList.remove('active');
+      }
+    });
+  }
+
+  // 2. Note Creation & Search
+  get('newNoteBtn')?.addEventListener('click', createNewNote);
+  get('searchInput')?.addEventListener('input', (e) => renderNotesList(e.target.value));
+
+  // 3. Inputs Sync
+  get('noteTitle')?.addEventListener('input', onNoteContentChange);
+  get('noteBody')?.addEventListener('input', onNoteContentChange);
+
+  // 4. Quick Actions
+  get('savePcBtn')?.addEventListener('click', saveNoteToPC);
+  get('zenModeQuickBtn')?.addEventListener('click', toggleZenMode);
+
+  // 5. Auth Modal Controls
+  get('openAuthModalBtn')?.addEventListener('click', () => {
+    const modal = get('authModal');
+    if (modal) modal.style.display = 'flex';
+  });
+
+  get('closeAuthModalBtn')?.addEventListener('click', () => {
+    const modal = get('authModal');
+    if (modal) modal.style.display = 'none';
+  });
+
+  get('authLoginBtn')?.addEventListener('click', handleLogin);
+  get('authSignUpBtn')?.addEventListener('click', handleSignUp);
+  get('logoutBtn')?.addEventListener('click', handleLogout);
+  get('forgotPasswordBtn')?.addEventListener('click', handleForgotPassword);
+
+  // 6. Formatting Toolbar
+  get('fmtBold')?.addEventListener('click', () => document.execCommand('bold'));
+  get('fmtItalic')?.addEventListener('click', () => document.execCommand('italic'));
+  get('fmtUnderline')?.addEventListener('click', () => document.execCommand('underline'));
+  get('fmtStrike')?.addEventListener('click', () => document.execCommand('strikeThrough'));
+  get('fontSelect')?.addEventListener('change', (e) => {
+    const body = get('noteBody');
+    if (body) body.style.fontFamily = e.target.value;
+  });
+
+  // 7. Backup & Restore
+  get('backupBtn')?.addEventListener('click', handleBackup);
+  get('restoreInput')?.addEventListener('change', handleRestore);
+}
+
+// --- NOTE CRUD FUNCTIONS ---
 function saveLocal() {
   localStorage.setItem('my_notepad_notes', JSON.stringify(notes));
 }
 
 function renderNotesList(filterText = '') {
-  notesList.innerHTML = '';
-  const filtered = notes.filter(n => 
-    (n.title || '').toLowerCase().includes(filterText.toLowerCase()) || 
+  const list = get('notesList');
+  if (!list) return;
+  list.innerHTML = '';
+
+  const filtered = notes.filter(n =>
+    (n.title || '').toLowerCase().includes(filterText.toLowerCase()) ||
     (n.body || '').toLowerCase().includes(filterText.toLowerCase())
   );
 
@@ -67,7 +122,7 @@ function renderNotesList(filterText = '') {
     item.onclick = () => selectNote(note.id);
 
     const titleEl = document.createElement('h4');
-    titleEl.textContent = note.title.trim() || 'Untitled Note';
+    titleEl.textContent = (note.title || '').trim() || 'Untitled Note';
 
     const dateEl = document.createElement('span');
     dateEl.className = 'note-date';
@@ -75,7 +130,7 @@ function renderNotesList(filterText = '') {
 
     item.appendChild(titleEl);
     item.appendChild(dateEl);
-    notesList.appendChild(item);
+    list.appendChild(item);
   });
 }
 
@@ -83,10 +138,11 @@ function selectNote(id) {
   activeNoteId = id;
   const current = notes.find(n => n.id === id);
   if (current) {
-    noteTitle.value = current.title || '';
-    noteBody.innerHTML = current.body || '';
+    if (get('noteTitle')) get('noteTitle').value = current.title || '';
+    if (get('noteBody')) get('noteBody').innerHTML = current.body || '';
   }
-  renderNotesList(searchInput.value);
+  renderNotesList(get('searchInput')?.value || '');
+  updateStats();
 }
 
 function createNewNote() {
@@ -99,52 +155,58 @@ function createNewNote() {
   notes.unshift(newNote);
   saveLocal();
   selectNote(newNote.id);
-  noteTitle.focus();
+  get('noteTitle')?.focus();
 }
 
-newNoteBtn.addEventListener('click', createNewNote);
-
-deleteNoteBtn.addEventListener('click', async () => {
-  if (!activeNoteId) return;
-  if (!confirm("Kya aap sach me ye note delete karna chahte hain?")) return;
-
-  const idToDelete = activeNoteId;
-  notes = notes.filter(n => n.id !== idToDelete);
-  saveLocal();
-
-  if (currentUser && sbClient) {
-    await sbClient.from('notes').delete().eq('id', idToDelete);
-  }
-
-  if (notes.length > 0) {
-    selectNote(notes[0].id);
-  } else {
-    createNewNote();
-  }
-});
-
-// Save content changes
 function onNoteContentChange() {
   const current = notes.find(n => n.id === activeNoteId);
   if (!current) return;
 
-  current.title = noteTitle.value;
-  current.body = noteBody.innerHTML;
+  current.title = get('noteTitle')?.value || '';
+  current.body = get('noteBody')?.innerHTML || '';
   current.updatedAt = new Date().toISOString();
 
   saveLocal();
-  renderNotesList(searchInput.value);
+  renderNotesList(get('searchInput')?.value || '');
+  updateStats();
   syncNoteToCloud(current);
 }
 
-noteTitle.addEventListener('input', onNoteContentChange);
-noteBody.addEventListener('input', onNoteContentChange);
-searchInput.addEventListener('input', (e) => renderNotesList(e.target.value));
+function updateStats() {
+  const text = get('noteBody')?.innerText || '';
+  const words = text.trim() ? text.trim().split(/\s+/).length : 0;
+  const chars = text.length;
+  const readTime = Math.ceil(words / 200);
+
+  const stats = get('readingStats');
+  if (stats) {
+    stats.textContent = `${words} words | ${chars} chars | ${readTime}m read`;
+  }
+}
+
+function saveNoteToPC() {
+  const current = notes.find(n => n.id === activeNoteId);
+  if (!current) return alert("Koi note select nahi hai!");
+  
+  const blob = new Blob([get('noteBody')?.innerText || ''], { type: 'text/plain' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `${current.title.trim() || 'note'}.txt`;
+  a.click();
+}
+
+function toggleZenMode() {
+  const sidebar = get('appSidebar');
+  if (sidebar) {
+    sidebar.style.display = sidebar.style.display === 'none' ? 'flex' : 'none';
+  }
+}
 
 // --- CLOUD SYNC LOGIC ---
 async function syncNoteToCloud(note) {
   if (!currentUser || !sbClient) return;
-  syncStatus.textContent = '☁️ Syncing...';
+  const status = get('syncStatus');
+  if (status) status.textContent = '☁️ Syncing...';
 
   try {
     const { error } = await sbClient.from('notes').upsert({
@@ -156,16 +218,17 @@ async function syncNoteToCloud(note) {
     });
 
     if (error) throw error;
-    syncStatus.textContent = `☁️ Synced (${currentUser.email})`;
+    if (status) status.textContent = `☁️ Synced (${currentUser.email})`;
   } catch (err) {
     console.error('Sync error:', err);
-    syncStatus.textContent = '⚠️ Sync Error';
+    if (status) status.textContent = '⚠️ Sync Error';
   }
 }
 
 async function loadNotesFromCloud() {
   if (!currentUser || !sbClient) return;
-  syncStatus.textContent = '☁️ Fetching notes...';
+  const status = get('syncStatus');
+  if (status) status.textContent = '☁️ Fetching notes...';
 
   try {
     const { data, error } = await sbClient.from('notes').select('*').eq('user_id', currentUser.id);
@@ -191,34 +254,29 @@ async function loadNotesFromCloud() {
       renderNotesList();
       selectNote(notes[0].id);
     }
-    syncStatus.textContent = `☁️ Synced (${currentUser.email})`;
+    if (status) status.textContent = `☁️ Synced (${currentUser.email})`;
   } catch (err) {
     console.error("Fetch error:", err);
-    syncStatus.textContent = '⚠️ Cloud error';
+    if (status) status.textContent = '⚠️ Cloud error';
   }
 }
 
-// --- AUTH LOGIC ---
+// --- AUTH HANDLERS ---
 function handleUserLoggedIn(user) {
   currentUser = user;
-  authModal.style.display = 'none';
-  openAuthModalBtn.style.display = 'none';
-  logoutBtn.style.display = 'block';
-  syncStatus.textContent = `☁️ Synced (${user.email})`;
+  const modal = get('authModal');
+  if (modal) modal.style.display = 'none';
+
+  if (get('openAuthModalBtn')) get('openAuthModalBtn').style.display = 'none';
+  if (get('logoutBtn')) get('logoutBtn').style.display = 'block';
+  if (get('syncStatus')) get('syncStatus').textContent = `☁️ Synced (${user.email})`;
+
   loadNotesFromCloud();
 }
 
-openAuthModalBtn.addEventListener('click', () => {
-  authModal.style.display = 'flex';
-});
-
-closeAuthModalBtn.addEventListener('click', () => {
-  authModal.style.display = 'none';
-});
-
-authLoginBtn.addEventListener('click', async () => {
-  const email = document.getElementById('authEmail').value.trim();
-  const password = document.getElementById('authPassword').value.trim();
+async function handleLogin() {
+  const email = get('authEmail')?.value.trim();
+  const password = get('authPassword')?.value.trim();
 
   if (!email || !password) return alert("Email aur Password dono bharein!");
   if (!sbClient) return alert("Database connect nahi hai.");
@@ -229,11 +287,11 @@ authLoginBtn.addEventListener('click', async () => {
   } else {
     handleUserLoggedIn(data.user);
   }
-});
+}
 
-authSignUpBtn.addEventListener('click', async () => {
-  const email = document.getElementById('authEmail').value.trim();
-  const password = document.getElementById('authPassword').value.trim();
+async function handleSignUp() {
+  const email = get('authEmail')?.value.trim();
+  const password = get('authPassword')?.value.trim();
 
   if (!email || !password) return alert("Email aur Password dono bharein!");
   if (!sbClient) return alert("Database connect nahi hai.");
@@ -242,58 +300,54 @@ authSignUpBtn.addEventListener('click', async () => {
   if (error) {
     alert("Sign up error: " + error.message);
   } else {
-    alert("Account ban gaya! Ab Log In button dabayein.");
+    alert("Account successfully ban gaya! Ab Log In button dabayein.");
   }
-});
+}
 
-logoutBtn.addEventListener('click', async () => {
+async function handleLogout() {
   if (sbClient) await sbClient.auth.signOut();
   currentUser = null;
-  logoutBtn.style.display = 'none';
-  openAuthModalBtn.style.display = 'block';
-  syncStatus.textContent = '☁️ Offline';
-  alert("Logged out!");
-});
+  if (get('logoutBtn')) get('logoutBtn').style.display = 'none';
+  if (get('openAuthModalBtn')) get('openAuthModalBtn').style.display = 'block';
+  if (get('syncStatus')) get('syncStatus').textContent = '☁️ Offline';
+  alert("Logged out successfully!");
+}
 
-// --- FORGOT PASSWORD HANDLER ---
-if (forgotPasswordBtn) {
-  forgotPasswordBtn.addEventListener('click', async (e) => {
-    e.preventDefault();
-    const email = document.getElementById('authEmail').value.trim();
+async function handleForgotPassword(e) {
+  e.preventDefault();
+  const email = get('authEmail')?.value.trim();
 
-    if (!email) {
-      alert("Pehle email box me apna Gmail type karein!");
-      return;
-    }
+  if (!email) {
+    alert("Pehle Email address wale box me apna Gmail type karein!");
+    return;
+  }
 
-    if (!sbClient) {
-      alert("Supabase client connect nahi hai.");
-      return;
-    }
+  if (!sbClient) {
+    alert("Database connect nahi hai.");
+    return;
+  }
 
-    const { error } = await sbClient.auth.resetPasswordForEmail(email, {
-      redirectTo: window.location.origin + window.location.pathname
-    });
-
-    if (error) {
-      alert("Error: " + error.message);
-    } else {
-      alert("Password reset link aapke Gmail par bhej diya gaya hai! Inbox check karein.");
-    }
+  const { error } = await sbClient.auth.resetPasswordForEmail(email, {
+    redirectTo: window.location.origin + window.location.pathname
   });
+
+  if (error) {
+    alert("Error: " + error.message);
+  } else {
+    alert("Password reset link aapke Gmail par bhej diya gaya hai! Inbox check karein.");
+  }
 }
 
 // --- BACKUP & RESTORE ---
-backupBtn.addEventListener('click', () => {
+function handleBackup() {
   const blob = new Blob([JSON.stringify(notes, null, 2)], { type: 'application/json' });
-  const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
-  a.href = url;
+  a.href = URL.createObjectURL(blob);
   a.download = `notes_backup_${new Date().toISOString().slice(0, 10)}.json`;
   a.click();
-});
+}
 
-restoreInput.addEventListener('change', (e) => {
+function handleRestore(e) {
   const file = e.target.files[0];
   if (!file) return;
 
@@ -306,29 +360,11 @@ restoreInput.addEventListener('change', (e) => {
         saveLocal();
         renderNotesList();
         if (notes.length > 0) selectNote(notes[0].id);
-        alert("Backup successfully restore ho gaya!");
+        alert("Backup restore ho gaya!");
       }
     } catch (err) {
       alert("Invalid backup file!");
     }
   };
   reader.readAsText(file);
-});
-
-// --- 3-LINE MENU TOGGLE ---
-const hamburgerBtn = document.getElementById('hamburgerMenuBtn');
-const featuresDrawer = document.getElementById('featuresDrawer');
-
-if (hamburgerBtn && featuresDrawer) {
-  hamburgerBtn.addEventListener('click', (e) => {
-    e.stopPropagation();
-    featuresDrawer.classList.toggle('active');
-  });
-
-  // Bahar click karne par menu apne aap band ho jaye
-  document.addEventListener('click', (e) => {
-    if (!featuresDrawer.contains(e.target) && e.target !== hamburgerBtn) {
-      featuresDrawer.classList.remove('active');
-    }
-  });
 }
