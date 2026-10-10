@@ -5,78 +5,222 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Ultimate Pro Notepad</title>
   <link rel="manifest" href="manifest.json">
-  <meta name="theme-color" content="#4f46e5">
+  <meta name="theme-color" content="#2563eb">
   <link rel="stylesheet" href="style.css">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
   <div class="app-layout">
-    <aside class="sidebar">
+    <!-- LEFT SIDEBAR -->
+    <aside class="sidebar" id="appSidebar">
       <div class="sidebar-header">
-        <h2>📝 My Notepad</h2>
-        <button id="newNoteBtn" class="primary-btn">+ New Note</button>
+        <div class="sidebar-brand">
+          <span class="brand-icon">📝</span>
+          <h2>Pro Notepad</h2>
+        </div>
+        <button id="openAuthModalBtn" class="auth-pill-btn">👤 Login</button>
       </div>
 
-      <div class="search-box">
+      <!-- FOLDERS / TABS -->
+      <div class="folders-bar">
+        <span class="section-label">Folders</span>
+        <button id="addFolderBtn" class="mini-btn">+ Folder</button>
+      </div>
+      <div class="folders-chips" id="folderChips">
+        <button class="folder-chip active" data-folder="Study">📚 Study</button>
+        <button class="folder-chip" data-folder="Personal">👤 Personal</button>
+      </div>
+
+      <!-- GOALS & STATS -->
+      <div class="sidebar-card">
+        <div class="card-row">
+          <span>🎯 Daily Goal</span>
+          <button class="chip-action-btn" id="setDailyGoalBtn">Set</button>
+        </div>
+        <div class="card-subtext" id="goalProgressText">500 words (0%)</div>
+      </div>
+
+      <div class="sidebar-card">
+        <div class="card-row">
+          <span>🔥 Study Streak</span>
+          <span class="highlight-text" id="streakDays">1 Day Active</span>
+        </div>
+      </div>
+
+      <!-- FOCUS SOUNDS -->
+      <div class="sidebar-card">
+        <span class="card-title">🎧 Focus Sounds</span>
+        <div class="sound-pills">
+          <button class="sound-btn" data-sound="rain">🌧️ Rain</button>
+          <button class="sound-btn" data-sound="cafe">☕ Cafe</button>
+          <button class="sound-btn" data-sound="noise">📻 White Noise</button>
+        </div>
+      </div>
+
+      <!-- SEARCH & NEW NOTE -->
+      <div class="search-wrap">
         <input type="text" id="searchInput" placeholder="Search notes...">
       </div>
+      <button id="newNoteBtn" class="new-note-action-btn">+ New Note</button>
 
+      <!-- NOTES LIST -->
       <div class="notes-list" id="notesList">
-        <!-- Notes list yahan dynamically render hogi -->
+        <!-- Notes list yahan dynamically load hogi -->
       </div>
 
+      <!-- SIDEBAR FOOTER -->
       <div class="sidebar-footer">
-        <div class="auth-status-bar" style="margin-bottom: 10px; font-size: 13px;">
+        <div class="status-indicator">
           <span id="syncStatus">☁️ Offline</span>
         </div>
-        <button id="openAuthModalBtn" class="secondary-btn" style="width: 100%; margin-bottom: 8px;">👤 Account / Login</button>
-        <button id="logoutBtn" class="danger-btn" style="width: 100%; display: none; margin-bottom: 8px;">Log Out</button>
-
-        <div class="backup-tools" style="display: flex; gap: 6px;">
-          <button id="backupBtn" class="small-btn" style="flex: 1;">Backup</button>
-          <label class="small-btn" style="flex: 1; text-align: center; cursor: pointer;">
-            Restore
+        <button id="logoutBtn" class="logout-btn" style="display: none;">Log Out</button>
+        <div class="data-hub-row">
+          <button id="backupBtn" class="data-btn">💾 Backup</button>
+          <label class="data-btn file-label">
+            📂 Restore
             <input type="file" id="restoreInput" accept=".json" style="display: none;">
           </label>
         </div>
       </div>
     </aside>
 
+    <!-- MAIN EDITOR AREA -->
     <main class="editor-area">
-      <div class="editor-toolbar">
-        <input type="text" id="noteTitle" placeholder="Untitled Note" class="note-title-input">
-        <div class="toolbar-actions">
-          <button id="deleteNoteBtn" class="icon-btn" title="Delete Note">🗑️</button>
+      <!-- TOP NAV / ACTION BAR -->
+      <header class="top-nav-bar">
+        <div class="left-nav-meta">
+          <button id="sidebarToggleBtn" class="mobile-menu-btn" title="Toggle Sidebar">📑</button>
+          <div class="reading-meta" id="readingStats">
+            0 words | 0 chars | 0m read
+          </div>
         </div>
-      </div>
+
+        <div class="right-nav-tools">
+          <!-- QUICK ACTION BUTTONS -->
+          <button id="savePcBtn" class="tool-pill save-pill" title="Save file to PC">💾 Save PC</button>
+          <button id="zenModeQuickBtn" class="tool-pill" title="Distraction Free Zen Mode">🧘 Zen</button>
+
+          <!-- 3-LINE (HAMBURGER) FEATURES MENU -->
+          <div class="tools-menu-container">
+            <button id="hamburgerMenuBtn" class="hamburger-menu-btn" type="button" title="All Features">
+              <span class="menu-lines-icon">☰</span>
+              <span class="menu-label">Features</span>
+            </button>
+
+            <!-- DROPDOWN DRAWER OF ALL ADVANCED TOOLS -->
+            <div id="featuresDrawer" class="features-drawer">
+              <div class="drawer-header">
+                <h4>Advanced Workspace Tools</h4>
+                <span class="drawer-desc">Sabhi extra features yahan se access karein</span>
+              </div>
+
+              <div class="drawer-section">
+                <span class="section-title">AI & Productivity</span>
+                <div class="drawer-grid">
+                  <button class="drawer-btn" id="featureAiTools">🤖 AI Tools</button>
+                  <button class="drawer-btn" id="featureMindMap">🧠 Mind Map</button>
+                  <button class="drawer-btn" id="featureHeatmap">📊 Heatmap</button>
+                  <button class="drawer-btn" id="featureFlashcard">🗂️ Flashcard</button>
+                  <button class="drawer-btn" id="featureKanban">📋 Kanban</button>
+                  <button class="drawer-btn" id="featureOutline">📑 Outline</button>
+                </div>
+              </div>
+
+              <div class="drawer-section">
+                <span class="section-title">Study & Focus</span>
+                <div class="drawer-grid">
+                  <button class="drawer-btn" id="featureTimer">⏱️ Pomodoro</button>
+                  <button class="drawer-btn" id="featureReadingMode">📖 Reading</button>
+                  <button class="drawer-btn" id="featureVoice">🎙️ Voice Note</button>
+                  <button class="drawer-btn" id="featureAudio">🔊 Audio Play</button>
+                  <button class="drawer-btn" id="featureDraw">🎨 Canvas Draw</button>
+                  <button class="drawer-btn" id="featureCamScan">📷 Cam Scan</button>
+                </div>
+              </div>
+
+              <div class="drawer-section">
+                <span class="section-title">Exports & Utilities</span>
+                <div class="drawer-grid">
+                  <button class="drawer-btn" id="featurePdfExport">📄 Export PDF</button>
+                  <button class="drawer-btn" id="featurePdfExtractor">📑 PDF Extract</button>
+                  <button class="drawer-btn" id="featureWordCloud">☁️ Word Cloud</button>
+                  <button class="drawer-btn" id="featureFolderLock">🔒 Lock Note</button>
+                  <button class="drawer-btn" id="featureHistory">⏳ History</button>
+                  <button class="drawer-btn" id="featureTrash">🗑️ Trash Bin</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      <!-- NOTE TITLE & TAGS BAR -->
+      <section class="title-meta-strip">
+        <input type="text" id="noteTitle" placeholder="Untitled Note" class="note-title-input">
+        <div class="tags-badge-row">
+          <input type="text" id="noteTagsInput" placeholder="#tags (e.g. #study #revision)" class="tags-field">
+        </div>
+      </section>
+
+      <!-- FORMATTING TOOLBAR -->
+      <section class="format-toolbar">
+        <select id="fontSelect" class="toolbar-select">
+          <option value="sans-serif">Default Sans</option>
+          <option value="serif">Serif Elegant</option>
+          <option value="monospace">Monospace Code</option>
+        </select>
+
+        <div class="toolbar-group">
+          <button class="fmt-btn" id="fmtBold" title="Bold"><b>B</b></button>
+          <button class="fmt-btn" id="fmtItalic" title="Italic"><i>I</i></button>
+          <button class="fmt-btn" id="fmtUnderline" title="Underline"><u>U</u></button>
+          <button class="fmt-btn" id="fmtStrike" title="Strike"><s>S</s></button>
+        </div>
+
+        <div class="toolbar-group">
+          <button class="fmt-btn" id="fmtTaskList" title="Checklist Task">☑️ Task</button>
+          <button class="fmt-btn" id="fmtTable" title="Table">▦ Table</button>
+          <button class="fmt-btn" id="fmtCodeBlock" title="Code Block">💻 Code</button>
+          <button class="fmt-btn" id="fmtInsertPhoto" title="Photo">🖼️ Photo</button>
+        </div>
+      </section>
+
+      <!-- NOTE WRITING CANVAS -->
       <div id="noteBody" class="note-body-editor" contenteditable="true" placeholder="Start typing your note here..."></div>
     </main>
   </div>
 
-  <!-- AUTH POPUP MODAL -->
+  <!-- AUTH POPUP MODAL (LOGIN / SIGN UP / FORGOT PASSWORD) -->
   <div id="authModal" class="modal-overlay" style="display: none;">
     <div class="modal-card">
       <div class="modal-header">
-        <h3>Cloud Account</h3>
+        <div class="modal-title-wrap">
+          <span class="cloud-icon">☁️</span>
+          <h3>Cloud Account</h3>
+        </div>
         <button id="closeAuthModalBtn" class="close-x">&times;</button>
       </div>
-      <p style="font-size: 13px; color: #64748b; margin-bottom: 15px;">Notes cloud par sync karne ke liye login ya sign up karein</p>
+      <p class="modal-sub">Notes cloud par sync karne ke liye login ya sign up karein</p>
       
-      <div class="form-group" style="margin-bottom: 12px;">
-        <input type="email" id="authEmail" placeholder="Email address" class="modal-input" style="width: 100%; padding: 10px; border-radius: 6px; border: 1px solid #cbd5e1;">
-      </div>
-      <div class="form-group" style="margin-bottom: 16px;">
-        <input type="password" id="authPassword" placeholder="Password" class="modal-input" style="width: 100%; padding: 10px; border-radius: 6px; border: 1px solid #cbd5e1;">
-      </div>
+      <div class="modal-form-wrap">
+        <div class="input-block">
+          <input type="email" id="authEmail" placeholder="Email address" class="styled-input">
+        </div>
+        <div class="input-block">
+          <input type="password" id="authPassword" placeholder="Password (min 6 characters)" class="styled-input">
+        </div>
 
-      <div style="display: flex; gap: 10px;">
-        <button id="authLoginBtn" class="primary-btn" style="flex: 1; padding: 10px;">Log In</button>
-        <button id="authSignUpBtn" class="secondary-btn" style="flex: 1; padding: 10px;">Sign Up</button>
-      </div>
+        <div class="modal-btn-row">
+          <button id="authLoginBtn" class="modal-primary-btn">Log In</button>
+          <button id="authSignUpBtn" class="modal-secondary-btn">Sign Up</button>
+        </div>
 
-      <!-- FORGOT PASSWORD LINK -->
-      <div style="text-align: center; margin-top: 14px;">
-        <a href="#" id="forgotPasswordBtn" style="color: #6366f1; font-size: 13px; text-decoration: underline; cursor: pointer;">Forgot Password?</a>
+        <!-- FORGOT PASSWORD LINK -->
+        <div class="forgot-link-box">
+          <button type="button" id="forgotPasswordBtn" class="forgot-link-btn">
+            Forgot Password?
+          </button>
+        </div>
       </div>
     </div>
   </div>
