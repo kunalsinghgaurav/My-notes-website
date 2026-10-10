@@ -5,7 +5,7 @@ if ('serviceWorker' in navigator) {
 
 // 1. SUPABASE CLIENT (Conflict-Free Name)
 const SUPABASE_URL = "https://chlupwfmalygwkubvbae.supabase.co";
-const SUPABASE_ANON_KEY = "chlupwfmalygwkubvbae"; 
+const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNobHVwd2ZtYWx5Z3drdWJ2YmFlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTE2MjUyODAsImV4cCI6MjEwNzIwMTI4MH0.KpUCpDyr9YVrdyw-woLn2scvZp1K7-WvMq1p_6eEkUg"; 
 
 let sbClient = null;
 try {
